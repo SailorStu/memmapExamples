@@ -45,6 +45,7 @@ typedef struct SharedMemory {
 
 void ChildLogic(SharedMemory *shared){
     struct timespec t;
+    int pageSize = sysconf(_SC_PAGE_SIZE);
     t.tv_sec = 0;
     t.tv_nsec = 25000;
     printf("Child Starting\n");
@@ -54,7 +55,7 @@ void ChildLogic(SharedMemory *shared){
         printf("Client Error opening /dev/mem\n");
         exit(1);
     }
-    void *vgaMem = mmap(0, 0x10000, PROT_READ | PROT_WRITE, MAP_SHARED, memFd, VGA_MEMBASE);
+    void *vgaMem = mmap(0, pageSize, PROT_READ | PROT_WRITE, MAP_SHARED, memFd, VGA_MEMBASE);
     if (vgaMem == MAP_FAILED){
         printf("Client Error mapping VGA memory\n");
         exit(1);
@@ -120,6 +121,8 @@ int main(int iargs, char **args){
     int childPid;
     int shMemFd;
 
+    int pageSize = sysconf(_SC_PAGE_SIZE);
+
     // are we root?
     if (geteuid() != 0){
         printf("You must be root to run this program\n");
@@ -131,7 +134,7 @@ int main(int iargs, char **args){
         exit(1);
     }
     // Map the VGA memory
-    void *vgaMem = mmap(0, 0x10000, PROT_READ | PROT_WRITE, MAP_SHARED, memFd, VGA_MEMBASE);
+    void *vgaMem = mmap(0, pageSize, PROT_READ | PROT_WRITE, MAP_SHARED, memFd, VGA_MEMBASE);
     if (vgaMem == MAP_FAILED){
         printf("Error mapping VGA memory\n");
         exit(1);
@@ -140,9 +143,9 @@ int main(int iargs, char **args){
     }
     // Write to the VGA memory
     uint16_t *vgaPtr = (uint16_t*)vgaMem;
-    uint16_t t[1024];
-    memcpy(t, vgaMem, 1024);
-    memset(vgaPtr, 0, 1024);
+    uint16_t t[pageSize];
+    memcpy(t, vgaMem, pageSize);
+    memset(vgaPtr, 0, pageSize);
     vgaPtr[0] = 0x0F55;
     sleep(1);
     if (vgaPtr[0] == 0x0F55 && vgaPtr[1] == 0){
@@ -220,7 +223,7 @@ int main(int iargs, char **args){
         } else {
             printf("Parent: Client changes not reflected in VGA memory\n");
         }   
-        memcpy(vgaMem, t, 1024);  // restore the VGA memory
+        memcpy(vgaMem, t, pageSize);  // restore the VGA memory
         // Close the file descriptor
         close(memFd);
 
