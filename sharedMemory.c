@@ -219,9 +219,9 @@ int main(int iargs, char **args){
 
         // See if client changes reflect in vga memory.
         if (vgaPtr[0] == 0xdead){
-            printf("Parent: Client changes reflected in VGA memory\n");
+            printf("Parent: Child changes reflected in VGA memory\n");
         } else {
-            printf("Parent: Client changes not reflected in VGA memory\n");
+            printf("Parent: Child changes not reflected in VGA memory\n");
         }   
         memcpy(vgaMem, t, pageSize);  // restore the VGA memory
         // Close the file descriptor
