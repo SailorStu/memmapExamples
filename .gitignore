@@ -2,3 +2,4 @@
 *.pdb
 *.obj
 sharedMemory
+shmem_posix
